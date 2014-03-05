@@ -1,0 +1,53 @@
+# 拷贝文件
+copy_to := $(addprefix $(ANDROID_PRODUCT_OUT)/recovery/root/sbin/,$(LOCAL_MODULE))
+copy_from := $(addprefix $(ANDROID_PRODUCT_OUT)/system/bin/,$(LOCAL_MODULE))
+
+.PHONY: copy_file
+$(LOCAL_MODULE): copy_file
+
+copy_file: $(copy_from)
+	cp $(copy_from) $(copy_to)
+
+# 还可以用copy-file-to-target-with-cp和copy-file-to-target等在.../bulid/core/definitions.mk定义的函数
+	
+# 拷贝so库, 到编译系统共享库目录(LOCAL_MODULE_CLASS := APPS用于拷贝到out/.../system/app/下)
+LOCAL_MODULE := libname.so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)
+LOCAL_SRC_FILES := libpath/$(LOCAL_MODULE)
+OVERRIDE_BUILD_MODULE_PATH := $(TARGET_OUT_INTERMEDIATE_LIBRARIES)
+include $(BUILD_PREBUILT)
+
+# 拷贝第三方jar包, 到编译系统共享库目录, 最终在out/target/product/generic/obj/JAVA_LIBRARIES/newLibDirName_intermediates/javalib.jar和out/target/common/obj/JAVA_LIBRARIES/SwlPlayerSupport_intermediates/javalib.jar, 不会拷贝到out/.../system/framework下
+LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := <newLibDirName>:libPath/libname.jar
+include $(BUILD_MULTI_PREBUILT)
+
+# 拷贝头文件, 到编译系统共享库目录
+CURL_HEADERS := \
+	curlbuild.h \
+	curl.h \
+LOCAL_COPY_HEADERS_TO := curl
+LOCAL_COPY_HEADERS := $(addprefix include/curl/,$(CURL_HEADERS))
+include $(BUILD_STATIC_LIBRARY) #或其它
+
+# apk链接第三方so包, (要用prebuild拷贝库文件到编译系统共享库目录)
+LOCAL_JNI_SHARED_LIBRARIES := libname
+
+# 链接第三方jar包, (要用prebuild拷贝库文件到编译系统共享库目录)
+LOCAL_JAVA_LIBRARIES :=
+或LOCAL_STATIC_JAVA_LIBRARIES 
+
+# 编译后调用
+#
+.PHONE: POST_BUILD
+$(POST_BUILD): iMODULE := $(LOCAL_MODULE)
+$(POST_BUILD): $(LOCAL_INSTALLED_MODULE) $(LOCAL_PATH)/Android.mk
+    @echo "post build"
+    @chmod 4755 $(iMODULE)
+
+ALL_DEFAULT_INSTALLED_MODULES += $(POST_BUILD)
+
+# We need this so that the installed files could be picked up based on the
+# local module name
+ALL_MODULES.$(LOCAL_MODULE).INSTALLED := \
+    $(ALL_MODULES.$(LOCAL_MODULE).INSTALLED) $(POST_BUILD)

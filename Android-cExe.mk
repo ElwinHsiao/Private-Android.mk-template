@@ -1,0 +1,18 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_CFLAGS += -DHAVE_CONFIG_H -DKHTML_NO_EXCEPTIONS -DGKWQ_NO_JAVA
+LOCAL_CFLAGS += -DNO_SUPPORT_JS_BINDING -DQT_NO_WHEELEVENT -DKHTML_NO_XBL
+
+LOCAL_SHARED_LIBRARIES += libskia libsurfaceflinger liblog
+LOCAL_PRELINK_MODULE := false
+
+LOCAL_CFLAGS += -DPACKED=""
+
+LOCAL_SRC_FILES := Ltest.cpp BlurFilter.cpp clz.cpp 
+
+LOCAL_C_INCLUDES := external/skia/include/core
+
+LOCAL_MODULE    := libtest
+
+include $(BUILD_SHARED_LIBRARY)
